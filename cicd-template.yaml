@@ -352,12 +352,14 @@ objects:
             
             sleep 5
 
+            # deploy sonarqube
             if [ "${EPHEMERAL}" == "true" ] ; then
               oc new-app -f https://raw.githubusercontent.com/siamaksade/sonarqube/master/sonarqube-template.yml --param=SONARQUBE_MEMORY_LIMIT=6Gi
             else
               oc new-app -f https://raw.githubusercontent.com/siamaksade/sonarqube/master/sonarqube-persistent-template.yml --param=SONARQUBE_MEMORY_LIMIT=6Gi
             fi
 
+            # deploy che
             if [ "${DEPLOY_CHE}" == "true" ] ; then
               oc process -f https://raw.githubusercontent.com/minishift/minishift/master/addons/che/templates/che-single-user.yml \
                 --param PROJECT_NAME=$CICD_NAMESPACE \
@@ -368,6 +370,7 @@ objects:
               oc set resources dc/che --limits=cpu=1,memory=2Gi --requests=cpu=200m,memory=512Mi
             fi
 
+            # deploy nexus
             if [ "${EPHEMERAL}" == "true" ] ; then
               oc new-app -f https://raw.githubusercontent.com/OpenShiftDemos/nexus/master/nexus3-template.yaml --param=NEXUS_VERSION=3.13.0 --param=MAX_MEMORY=2Gi
             else
@@ -376,6 +379,15 @@ objects:
 
             oc set resources dc/nexus --requests=cpu=200m,memory=1Gi --limits=cpu=2,memory=4Gi 
 
+            # enable tls termination for all endpoints
+            oc patch route jenkins -p '{"spec":{"tls":{"insecureEdgeTerminationPolicy":"Redirect","termination":"edge"}}}' -n ${CICD_NAMESPACE}
+            oc patch route gogs -p '{"spec":{"tls":{"insecureEdgeTerminationPolicy":"Redirect","termination":"edge"}}}' -n ${CICD_NAMESPACE}
+            oc patch route nexus -p '{"spec":{"tls":{"insecureEdgeTerminationPolicy":"Redirect","termination":"edge"}}}' -n ${CICD_NAMESPACE}
+            oc patch route sonarqube -p '{"spec":{"tls":{"insecureEdgeTerminationPolicy":"Redirect","termination":"edge"}}}' -n ${CICD_NAMESPACE}
+            oc patch route tasks -p '{"spec":{"tls":{"insecureEdgeTerminationPolicy":"Redirect","termination":"edge"}}}' -n ${DEV_PROJECT}
+            oc patch route tasks -p '{"spec":{"tls":{"insecureEdgeTerminationPolicy":"Redirect","termination":"edge"}}}' -n ${STAGE_PROJECT}
+
+            # setup gogs
             GOGS_SVC=$(oc get svc gogs -o template --template='{{.spec.clusterIP}}')
             GOGS_USER=gogs
             GOGS_PWD=gogs

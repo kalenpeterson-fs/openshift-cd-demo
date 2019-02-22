@@ -19,7 +19,7 @@ function usage() {
     echo "   delete                   Clean up and remove demo projects and objects"
     echo "   idle                     Make all demo services idle"
     echo "   unidle                   Make all demo services unidle"
-    echo 
+    echo
     echo "OPTIONS:"
     echo "   --enable-quay              Optional    Enable integration of build and deployments with quay.io"
     echo "   --quay-username            Optional    quay.io username to push the images to a quay.io account. Required if --enable-quay is set"
@@ -142,8 +142,8 @@ done
 LOGGEDIN_USER=$(oc $ARG_OC_OPS whoami)
 OPENSHIFT_USER=${ARG_USERNAME:-$LOGGEDIN_USER}
 PRJ_SUFFIX=${ARG_PROJECT_SUFFIX:-`echo $OPENSHIFT_USER | sed -e 's/[-@].*//g'`}
-GITHUB_ACCOUNT=${GITHUB_ACCOUNT:-siamaksade}
-GITHUB_REF=${GITHUB_REF:-ocp-3.11}
+GITHUB_ACCOUNT=${GITHUB_ACCOUNT:-kpeterson-fs}
+GITHUB_REF=${GITHUB_REF:-ocp-3.11-demofix}
 
 function deploy() {
   oc $ARG_OC_OPS new-project dev-$PRJ_SUFFIX   --display-name="Tasks - Dev"
@@ -159,7 +159,7 @@ function deploy() {
     oc $ARG_OC_OPS adm policy add-role-to-user admin $ARG_USERNAME -n dev-$PRJ_SUFFIX >/dev/null 2>&1
     oc $ARG_OC_OPS adm policy add-role-to-user admin $ARG_USERNAME -n stage-$PRJ_SUFFIX >/dev/null 2>&1
     oc $ARG_OC_OPS adm policy add-role-to-user admin $ARG_USERNAME -n cicd-$PRJ_SUFFIX >/dev/null 2>&1
-    
+
     oc $ARG_OC_OPS annotate --overwrite namespace dev-$PRJ_SUFFIX   demo=openshift-cd-$PRJ_SUFFIX >/dev/null 2>&1
     oc $ARG_OC_OPS annotate --overwrite namespace stage-$PRJ_SUFFIX demo=openshift-cd-$PRJ_SUFFIX >/dev/null 2>&1
     oc $ARG_OC_OPS annotate --overwrite namespace cicd-$PRJ_SUFFIX  demo=openshift-cd-$PRJ_SUFFIX >/dev/null 2>&1
@@ -175,7 +175,7 @@ function deploy() {
 
   local template=https://raw.githubusercontent.com/$GITHUB_ACCOUNT/openshift-cd-demo/$GITHUB_REF/cicd-template.yaml
   echo "Using template $template"
-  oc $ARG_OC_OPS new-app -f $template -p DEV_PROJECT=dev-$PRJ_SUFFIX -p STAGE_PROJECT=stage-$PRJ_SUFFIX -p DEPLOY_CHE=$ARG_DEPLOY_CHE -p EPHEMERAL=$ARG_EPHEMERAL -p ENABLE_QUAY=$ARG_ENABLE_QUAY -p QUAY_USERNAME=$ARG_QUAY_USER -p QUAY_PASSWORD=$ARG_QUAY_PASS -n cicd-$PRJ_SUFFIX 
+  oc $ARG_OC_OPS new-app -f $template -p DEV_PROJECT=dev-$PRJ_SUFFIX -p STAGE_PROJECT=stage-$PRJ_SUFFIX -p DEPLOY_CHE=$ARG_DEPLOY_CHE -p EPHEMERAL=$ARG_EPHEMERAL -p ENABLE_QUAY=$ARG_ENABLE_QUAY -p QUAY_USERNAME=$ARG_QUAY_USER -p QUAY_PASSWORD=$ARG_QUAY_PASS -n cicd-$PRJ_SUFFIX
 }
 
 function make_idle() {
@@ -250,7 +250,7 @@ case "$ARG_COMMAND" in
         echo
         echo "Delete completed successfully!"
         ;;
-      
+
     idle)
         echo "Idling demo..."
         make_idle
@@ -271,7 +271,7 @@ case "$ARG_COMMAND" in
         echo
         echo "Provisioning completed successfully!"
         ;;
-        
+
     *)
         echo "Invalid command specified: '$ARG_COMMAND'"
         usage
@@ -283,4 +283,4 @@ popd >/dev/null
 
 END=`date +%s`
 echo "(Completed in $(( ($END - $START)/60 )) min $(( ($END - $START)%60 )) sec)"
-echo 
+echo
